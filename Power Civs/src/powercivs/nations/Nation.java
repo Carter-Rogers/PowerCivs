@@ -35,6 +35,8 @@ public class Nation implements Serializable {
 
 	public final TaxPolicy flat_tax = new TaxPolicy("Flat Tax", .03, PolicyApplies.CITIZENS);
 	
+	public String homeX, homeY, homeZ;
+	
 	public Nation(NationType type, String nationName, Player player) {
 		this.type = type;
 		this.nationName = nationName;
@@ -136,6 +138,12 @@ public class Nation implements Serializable {
 			return true;
 		else
 			return false;
+	}
+	
+	public void setHome(String chX, String chY, String chZ) {
+		this.homeX = chX;
+		this.homeZ = chZ;
+		this.homeY = chY;
 	}
 	
 	public static enum NationType {

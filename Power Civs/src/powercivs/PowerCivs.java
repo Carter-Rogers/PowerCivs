@@ -156,7 +156,7 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 
 			}
 
-		}, 0, 600);
+		}, 0, 3600);
 
 	}
 
@@ -352,7 +352,7 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 					if(ClaimManager.getClaim(cX, cY) == null) {
 						@SuppressWarnings("unused")
 						LandClaim lc = new LandClaim(cX, cY, n);
-						Bukkit.broadcastMessage(ChatColor.GREEN + " Has Just Made A Land Claim At Chunk: " + cX + ", " + cY + "!");
+						((Player)sender).sendMessage(ChatColor.BLUE + "Successfully Claimed This Chunk!");
 						ClaimManager.saveClaims();	
 						return true;
 					}else {
@@ -369,8 +369,7 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 					if(ClaimManager.getClaim(cX, cY) == null) { 
 						@SuppressWarnings("unused")
 						LandClaim lc = new LandClaim(cX, cY, n);
-						Bukkit.broadcastMessage(
-								ChatColor.GREEN + " Has Just Made A Land Claim At Chunk: " + cX + ", " + cY + "!");
+						((Player)sender).sendMessage(ChatColor.BLUE + "Successfully Claimed This Chunk!");
 						ClaimManager.saveClaims();
 						return true;
 					}else {
@@ -396,6 +395,29 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 				p.sendMessage("/n ct <value> : Changes your nation's corporate tax rate on registered corporations.");
 				p.sendMessage("/n war <nation> : Engages two nations in war if the starting nation has $250!");
 				p.sendMessage("/n warend <nation> : Ends war between two nations!");
+			}
+			
+			if(command.equalsIgnoreCase("sethome")) {
+				Nation n = NationManager.getNationByCit(((Player)sender).getDisplayName());
+				if(n != null) {
+					if(n.getUUID().equals(((Player)sender).getUniqueId())) {
+						Player p = ((Player)sender);
+						n.setHome(String.valueOf(p.getLocation().getX()), String.valueOf(p.getLocation().getY()), String.valueOf(p.getLocation().getZ()));
+						((Player)sender).sendMessage(ChatColor.BLUE + "Nation's Home Set Succesfully!");
+						return true;
+					}
+				}
+			} 
+			
+			if(command.equalsIgnoreCase("home")) {
+				Nation n = NationManager.getNationByCit(((Player)sender).getDisplayName());
+				
+				if(n != null) {
+					Player p = (Player)sender;
+					World w = getServer().getWorlds().get(0);
+					p.teleport(new Location(w, Double.parseDouble(n.homeX), Double.parseDouble(n.homeY), Double.parseDouble(n.homeZ)));
+				}
+				return true;
 			}
 			
 			if (command.equalsIgnoreCase("remove")) {

@@ -49,6 +49,16 @@ public class NationManager implements Serializable {
 		
 	}
 	
+	public static void setHome(String name, String chX, String chY, String chZ) {
+		for(Nation n : nations) {
+			if(n.getNationName().equals(name)) {
+				n.setHome(chX, chY, chZ);
+			}else {
+				continue;
+			}
+		}
+	}
+	
 	public static boolean registerNation(Nation n) {
 		boolean found = false;
 
