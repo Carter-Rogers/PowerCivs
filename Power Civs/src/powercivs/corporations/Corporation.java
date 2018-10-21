@@ -45,7 +45,11 @@ public class Corporation implements Serializable {
 	public void addEmployee(String player) {
 		if (!employees.contains(player)) {
 			employees.add(player);
-			Bukkit.broadcastMessage(ChatColor.GOLD + corporationName + " just hired a new employee!");
+			
+			if(player.equals(CEO.toString())) 
+				return;
+			else
+				Bukkit.broadcastMessage(ChatColor.GOLD + corporationName + " just hired a new employee!");
 		} else
 			return;
 	}

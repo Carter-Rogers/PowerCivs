@@ -50,14 +50,25 @@ public class Nation implements Serializable {
 		}
 	}
 	
-	@SuppressWarnings("deprecation")
 	public void addCitizen(Citizen citizen) {
 		if(citizens.contains(citizen)) {
 			return;
 		}else {
 			citizens.add(citizen);
-			Player p = Bukkit.getPlayer(citizen.getDisplayName());
-			p.sendMessage("You Were Just Invited Into " + nationName);
+		}
+	}
+	
+	public void removeCitizen(Citizen citizen) {
+		try {
+			for(Citizen c : citizens) {
+				if(c.displayName.equals(citizen.displayName)) {
+					citizens.remove(c);
+				}else {
+					continue;
+				}
+			}
+		}catch(Exception e) {
+			return;
 		}
 	}
 

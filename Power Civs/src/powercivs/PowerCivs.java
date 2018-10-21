@@ -3,10 +3,13 @@ package powercivs;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -16,6 +19,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -47,6 +51,8 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 
 	boolean loaded = false;
 
+	protected String[] messages = {"Remember To Register Your Corporation Or You May Be Arrested Or Have A Bounty Put On You! Remember Registering Is Optional Though!", "Declaring War On A Nation Costs $250! Make sure you have enough money by depositing into your nation!", "Remember To Register Your Corporation Or You May Be Arrested Or Have A Bounty Put On You! Remember Registering Is Optional Though!","Remember To Register Your Corporation Or You May Be Arrested Or Have A Bounty Put On You! Remember Registering Is Optional Though!"};
+	
 	public static ArrayList<Player> playersinworld = new ArrayList<>();
 
 	public PacketPlayOutTitle packet = new PacketPlayOutTitle(EnumTitleAction.TITLE,
@@ -78,8 +84,18 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 		@SuppressWarnings("unused")
 		int id = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
 			public void run() {
+				Random rr = new Random();
+				
+				int val = rr.nextInt(messages.length);
+				
+				if(val < 0) 
+					val = 0;
+				if(val > messages.length)
+					val = messages.length;
+				
+				
 				Bukkit.getServer().broadcastMessage(ChatColor.GOLD
-						+ "Remember To Register Your Corporation Or You May Be Arrested Or Have A Bounty Put On You! Remember Registering Is Optional Though!");
+						+ messages[val]);
 				index += 1;
 				
 				for (Corporation corp : CorporationManager.corporations) {
@@ -245,8 +261,8 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 				}
 
 				if (NationManager.registerNation(new Nation(ntype, name, p))) {
-					Bukkit.broadcastMessage("Welcome " + name);
 					saveNations();
+					CitizenManager.getCitizen(p.getDisplayName()).addMoney(-50);
 				}
 
 				return true;
@@ -255,6 +271,7 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 			if (type.equalsIgnoreCase("c") || type.equalsIgnoreCase("corporation")) {
 				Corporation c = new Corporation(name, ((Player)sender).getUniqueId());
 				CorporationManager.registerCorporation(c);
+				CitizenManager.getCitizen(((Player)sender).getDisplayName()).addMoney(-100);
 				return true;
 			}
 
@@ -370,6 +387,17 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 
 			String command = args[0];
 
+			if(command.equalsIgnoreCase("help")) {
+				Player p = ((Player)sender).getPlayer();
+				p.sendMessage("/n remove <nation> : Removes a nation from existence! Only works if you're the leader!");
+				p.sendMessage("/n info <nation> : Gives information on selected nation.");
+				p.sendMessage("/n add <name> : Invites a player to your nation!");
+				p.sendMessage("/n add policy <policyname> <value> c : Adds a new tax policy to your nation.");
+				p.sendMessage("/n ct <value> : Changes your nation's corporate tax rate on registered corporations.");
+				p.sendMessage("/n war <nation> : Engages two nations in war if the starting nation has $250!");
+				p.sendMessage("/n warend <nation> : Ends war between two nations!");
+			}
+			
 			if (command.equalsIgnoreCase("remove")) {
 				Nation n = NationManager.getNation(args[1]);
 
@@ -518,12 +546,17 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 				return true;
 			}
 
-			if (command.equalsIgnoreCase("rn")) {
+			if (command.equalsIgnoreCase("remove")) {
 
 				String name = args[1];
+				Nation n = NationManager.playerBelongs(((Player) sender));
 
-				NationManager.removeName(name, ((Player) sender).getDisplayName());
-
+				if(n != null) {
+					if(n.getMayor().equals(((Player)sender).getName())) {
+						n.removeCitizen(CitizenManager.getCitizen(name));
+					}
+				}
+				
 				return true;
 			}
 			
@@ -545,24 +578,31 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 			if(command.equalsIgnoreCase("war")) {
 				String name = args[1];
 				
-				Nation n = NationManager.playerBelongs(((Player)sender));
-				
-				if(n != null) {
+				if(!name.equalsIgnoreCase("Spawn")) {
+					Nation n = NationManager.playerBelongs(((Player)sender));
 					
-					
-					if(n.getMayor().equals(((Player)sender).getName())) {
-						if(NationManager.getNation(name)!=null) {
-							
-							if(n.getTreasury() >= 250)
-								NationManager.setWar(n, NationManager.getNation(name));
-							else
-								((Player)sender).sendMessage(ChatColor.RED + "Not Enough Funds To Do That!");
+					if(n != null) {
+						
+						
+						
+						if(n.getMayor().equals(((Player)sender).getName())) {
+							if(NationManager.getNation(name)!=null) {
+								
+								if(n.getTreasury() >= 250)
+									NationManager.setWar(n, NationManager.getNation(name));
+								else
+									((Player)sender).sendMessage(ChatColor.RED + "Not Enough Funds To Do That!");
+								return true;
+							}
 							return true;
 						}
 						return true;
 					}
+				}else {
+					((Player)sender).sendMessage(ChatColor.RED + "You Cannot Declare War On The Spawn Area!");
 					return true;
 				}
+			
 				
 				return true;
 			}
@@ -678,7 +718,7 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 			if(n==null)
 				e.setCancelled(true);
 			
-			if (cc.getOwner().equals(n.getNationName()) || NationManager.getNation(cc.getOwner()).isEnemy(n.getNationName())) {
+			if (cc.getOwner().equals(n.getNationName())) {
 			} else {
 				e.setCancelled(true);
 			}
@@ -796,5 +836,16 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 		CitizenManager.saveCitizen();
 	}
 	
+	@EventHandler
+	public void onDeath(PlayerDeathEvent event) {
+		World w = getServer().getWorlds().get(0);
+		Player player = event.getEntity();
+		
+		Location l = w.getSpawnLocation();
+		l.setPitch(-175.8f);
+		l.setPitch(4.0f);
+		
+		player.teleport(l);
+	}
 	
 }
