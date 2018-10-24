@@ -10,10 +10,11 @@ public class Citizen implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 	protected String displayName;
-	protected String lastNation = "";
+	public String lastLocation = "Spawn";
 	public String money = "1000";
-	
 	public ArrayList<String> requestingNations;
+	
+	public boolean created = false;
 	
 	protected boolean jailed = false, warrant = false;
 	

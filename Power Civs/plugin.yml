@@ -34,6 +34,9 @@ commands:
  bal:
   description: checks player economy balance.
   usage: /bal
+ balance:
+  description: checks player economy balance.
+  usage: /balance
  accept:
   description: accepts a request from a nation
   usage: /accept <nation>
