@@ -40,7 +40,7 @@ public class Nation implements Serializable {
 	public Nation(NationType type, String nationName, Player player) {
 		this.type = type;
 		this.nationName = nationName;
-		this.corporate = 2;
+		this.corporate = 0;
 		this.bank = new Bank(50.0d);
 		
 		if (player != null) {

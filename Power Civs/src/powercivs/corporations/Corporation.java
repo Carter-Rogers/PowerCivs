@@ -93,8 +93,10 @@ public class Corporation implements Serializable {
 
 	public void takeTax() {
 		try {
-			double val = homeNation.getCorporateRate();
+			double val = homeNation.getCorporateRate();			
 			val = val /= 100;
+			if(homeNation.getCorporateRate() <= 0)
+				val = 1;
 			double takeAmount = capital * val;
 			capital = capital - takeAmount;
 			NationManager.getNation(homeNation.getNationName()).addCapital(takeAmount);
