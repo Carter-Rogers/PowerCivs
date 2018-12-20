@@ -4,6 +4,9 @@ version: 0.1.0
 load: STARTUP
 author: Carter_Rogers
 commands:
+ asset:
+  description: registers assets.
+  usage: /asset <name> <amount>
  c:
   description: enters commands for corporations
   usage: /c <command> <arguments>
@@ -40,3 +43,4 @@ commands:
  accept:
   description: accepts a request from a nation
   usage: /accept <nation>
+  

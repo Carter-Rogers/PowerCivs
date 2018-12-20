@@ -31,7 +31,11 @@ public class CitizenManager {
 					name = name.substring(0, name.indexOf("."));
 					
 					Citizen cit = (Citizen)ois.readObject();
-					addCitizen(cit);
+					
+					Citizen c = new Citizen(name);
+					c.money = cit.money;
+					
+					addCitizen(c);
 					
 					ois.close();
 					fis.close();
@@ -45,10 +49,8 @@ public class CitizenManager {
 	static boolean found = false;
 	
 	public static void addCitizen(Citizen citizen) {
-		if(citizens.contains(citizen))
-			return;
-		else
-			citizens.add(citizen);
+		if(!citizens.contains(citizen))
+				citizens.add(citizen);			
 	}
 	
 	public static boolean exists(Citizen citizen) {
@@ -66,14 +68,14 @@ public class CitizenManager {
 				continue;
 			}
 		}
-		Citizen c = new Citizen(name);
-		addCitizen(c);
-		return c;
+		return null;
 	}
 
 	public static void saveCitizen() {
 		try {			
 			for(Citizen cit : citizens) {
+				
+				
 				FileOutputStream ft = new FileOutputStream(PowerCivs.path + "/Players/" + cit.displayName + ".dat");
 				ObjectOutputStream os = new ObjectOutputStream(ft);
 				os.writeObject(cit);

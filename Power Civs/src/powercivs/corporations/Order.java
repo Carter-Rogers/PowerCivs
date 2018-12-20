@@ -1,5 +1,8 @@
 package powercivs.corporations;
 
-public class Order implements Serializable {
+import java.io.Serializable;
 
+@SuppressWarnings("serial")
+public class Order implements Serializable {
+	
 }

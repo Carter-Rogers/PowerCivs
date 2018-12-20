@@ -11,7 +11,7 @@ public class Citizen implements Serializable{
 	private static final long serialVersionUID = 1L;
 	protected String displayName;
 	public String lastLocation = "Spawn";
-	public String money = "1000";
+	public String money = "0";
 	public ArrayList<String> requestingNations;
 	
 	public boolean created = false;

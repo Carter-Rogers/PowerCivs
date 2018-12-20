@@ -6,7 +6,9 @@
 <fullyQualifiedTypeName name="org.bukkit.Location"/>
 <fullyQualifiedTypeName name="org.bukkit.ChatColor"/>
 <fullyQualifiedTypeName name="com.main.Game"/>
-<fullyQualifiedTypeName name="java.io.IOException"/>
 <fullyQualifiedTypeName name="java.io.File"/>
+<fullyQualifiedTypeName name="java.io.InputStream"/>
+<fullyQualifiedTypeName name="com.main.Configuration"/>
+<fullyQualifiedTypeName name="java.io.IOException"/>
 <fullyQualifiedTypeName name="javax.imageio.ImageIO"/>
 </qualifiedTypeNameHistroy>

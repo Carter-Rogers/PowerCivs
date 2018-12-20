@@ -7,10 +7,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
+import org.bukkit.Bukkit;
+
 import powercivs.PowerCivs;
 
 public class ClaimManager {
-	
+
 	public static ArrayList<LandClaim> claims = new ArrayList<LandClaim>();
 
 	public static void initClaims() {
@@ -35,59 +37,83 @@ public class ClaimManager {
 			}
 		}
 	}
-	
+
 	public static void reload() {
 		claims = null;
 		claims = new ArrayList<LandClaim>();
 		initClaims();
 	}
-	
-	public static void removeClaim(String owner) {
-		try {			
-			for(LandClaim lc : claims) {
-				if(lc.getOwner().equals(owner)) {
-					claims.remove(lc);
-					continue;
+
+	public static void removeClaim(String owner, boolean priv) {
+		try {
+			if (NationManager.getNation(owner) != null) {
+				String ow = Bukkit.getPlayer(NationManager.getNation(owner).mayorUUID).getDisplayName();
+				for (LandClaim lc : claims) {
+					
+					if(lc.getOwner() == null || lc.getOwner() == "?") {
+						if(lc.getPrivateOwner().equals(ow)) {
+							return;
+						}else {
+							claims.remove(lc);
+						}
+					}else if (lc.getOwner().equals(owner)) {
+						claims.remove(lc);
+						continue;
+					}
+					
+					
 				}
+			} else {
+				return;
 			}
-		}catch(Exception e) {
+
+		} catch (Exception e) {
 			return;
 		}
 	}
-	
+
 	public static boolean addClaim(LandClaim claim) {
-		if(claims.contains(claim))
+		if (claims.contains(claim))
 			return false;
 		else {
 			claims.add(claim);
 			return true;
 		}
-			
+
 	}
 
 	public static LandClaim getClaim(String chX, String chY) {
-		for(LandClaim c : claims) {
-			if(c.chX.equals(chX) & c.chY.equals(chY))
+		for (LandClaim c : claims) {
+			if (c.chX.equals(chX) & c.chY.equals(chY))
 				return c;
 			else
 				continue;
 		}
 		return null;
 	}
-	
+
 	public static void saveClaims() {
 		try {
-			for (LandClaim claim: claims) {
-				FileOutputStream fout = new FileOutputStream(PowerCivs.path + "/Claims/" + claim.getOwner() + ","+claim.chX + ","+claim.chY + ".dat");
+			for (LandClaim claim : claims) {
+				FileOutputStream fout = null;
+				if (claim.getPrivateOwner().equals("?")) {
+
+					fout = new FileOutputStream(PowerCivs.path + "/Claims/" + claim.getOwner() + "," + claim.chX + ","
+							+ claim.chY + ".dat");
+				} else {
+					fout = new FileOutputStream(PowerCivs.path + "/Claims/" + claim.getPrivateOwner() + "," + claim.chX
+							+ "," + claim.chY + ".dat");
+
+				}
+
 				ObjectOutputStream oos = new ObjectOutputStream(fout);
 				oos.writeObject(claim);
 				fout.flush();
 				fout.close();
 			}
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 }
