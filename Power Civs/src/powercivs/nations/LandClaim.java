@@ -14,6 +14,8 @@ public class LandClaim implements Serializable{
 	
 	protected int claimAmount = 0;
 	
+	protected boolean capitalClaim = false;
+	
 	public LandClaim(String chX, String chY, Nation owner) {
 		this.chX = chX;
 		this.chY = chY;
@@ -60,6 +62,14 @@ public class LandClaim implements Serializable{
 	
 	public String getPrivateOwner() {
 		return owner_private;
+	}
+	
+	public void setCapitalClaim(boolean tof) {
+		this.capitalClaim = tof;
+	}
+	
+	public boolean isCapitalClaim() {
+		return this.capitalClaim;
 	}
 	
 }

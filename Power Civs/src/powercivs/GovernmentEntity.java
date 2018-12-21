@@ -7,11 +7,14 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import powercivs.GovernmentElection.ElectionCandidate;
 import powercivs.nations.LandClaim;
 
 public abstract class GovernmentEntity implements Serializable{
 
 	public ArrayList<GovernmentAsset> assets = new ArrayList<GovernmentAsset>();
+	public  ArrayList<ElectionCandidate> candidates = new ArrayList<ElectionCandidate>();
+	
 	protected GovernmentElection presidential;
 	
 	private static final long serialVersionUID = 1L;

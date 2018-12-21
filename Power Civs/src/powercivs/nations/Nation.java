@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 
 import powercivs.GovernmentAsset;
 import powercivs.GovernmentElection;
+import powercivs.GovernmentElection.ElectionCandidate;
 import powercivs.GovernmentElection.GovernmentOfficial;
 import powercivs.GovernmentEntity;
 import powercivs.nations.economy.Bank;
@@ -41,7 +42,6 @@ public class Nation extends GovernmentEntity implements Serializable {
 
 	public String homeX, homeY, homeZ;
 
-
 	public Nation(NationType type, String nationName, Player player) {
 		this.type = type;
 		this.nationName = nationName;
@@ -56,27 +56,29 @@ public class Nation extends GovernmentEntity implements Serializable {
 			this.mayor = "NO_MAYOR";
 		}
 	}
+	
+	public ElectionCandidate getCandidate(String name) {
+		for(ElectionCandidate c : candidates) {
+			if(c.getPlayer().equals(name)) {
+				return c;
+			}
+		}
+		return null;
+	}
 
 	public void newElection(GovernmentOfficial official) {
-			if(presidential == null) {
-				GovernmentElection ge = new GovernmentElection(official, NationManager.getNation(nationName));
-				presidential = ge;				
-				presidential.population = citizens.size();
-				this.broadcastToCitizens(
-						"The " + presidential.getPosition() + " election is now open! You can register with /e register !");
-			}else {
-				if(presidential.done == true) {
-					GovernmentElection ge = new GovernmentElection(official, NationManager.getNation(nationName));
-					presidential = ge;				
-					presidential.population = citizens.size();
-					this.broadcastToCitizens(
-							"The " + presidential.getPosition() + " election is now open! You can register with /e register !");
-				}else {
-					presidential.population = citizens.size();
-					Bukkit.getPlayer(mayorUUID).sendMessage("ALREADY GOING ON!" + presidential.population);
-				}
-			}
-			
+		presidential = new GovernmentElection(official, null);
+		presidential.done = true;
+		
+		if (presidential.done == true) {
+			GovernmentElection ge = new GovernmentElection(official, NationManager.getNation(nationName));
+			presidential = ge;
+			presidential.population = citizens.size();
+			this.broadcastToCitizens(ChatColor.GOLD + "The " + ChatColor.BLUE + presidential.getPosition() + ChatColor.GOLD + " election is now open! You can register with /e register !");
+		} else {
+			presidential.population = citizens.size();
+			Bukkit.getPlayer(mayorUUID).sendMessage("ALREADY GOING ON!" + presidential.population);
+		}
 
 	}
 
@@ -144,7 +146,7 @@ public class Nation extends GovernmentEntity implements Serializable {
 		for (Citizen c : citizens) {
 			@SuppressWarnings("deprecation")
 			Player p = Bukkit.getPlayer(c.getDisplayName());
-			if(p == null)
+			if (p == null)
 				return;
 			else
 				p.sendMessage(ChatColor.BLUE + message);

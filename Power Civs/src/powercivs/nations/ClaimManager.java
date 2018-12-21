@@ -44,6 +44,20 @@ public class ClaimManager {
 		initClaims();
 	}
 
+	public static int numOfClaims(String owner) {
+		int i = 0;
+		for(LandClaim cc : claims) {
+			if(cc.getOwner() != null || cc.getOwner() != "?") {
+				if(cc.getOwner().equals(owner)) {
+					i += 1;
+				}else {
+					continue;
+				}
+			}
+		}
+		return i;
+	}
+	
 	public static void removeClaim(String owner, boolean priv) {
 		try {
 			if (NationManager.getNation(owner) != null) {

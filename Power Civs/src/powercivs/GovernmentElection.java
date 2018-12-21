@@ -23,8 +23,6 @@ public class GovernmentElection implements Serializable {
 	
 	protected GovernmentOfficial position = GovernmentOfficial.PRESIDENT;
 	
-	ArrayList<ElectionCandidate> candidates = new ArrayList<ElectionCandidate>();
-	
 	public GovernmentElection(GovernmentOfficial position, Nation nation) {
 		this.position = position;
 		this.nation = nation;
@@ -38,10 +36,11 @@ public class GovernmentElection implements Serializable {
 	}
 	
 	public void registerCandidate(ElectionCandidate candidate) {
-		if(candidates.contains(candidate)) {
+		
+		if(nation.candidates.contains(candidate)) {
 			return;
 		}else {
-			candidates.add(candidate);
+			nation.candidates.add(candidate);
 			NationManager.getNationByCit(candidate.player).broadcastToCitizens(candidate.player + " has registered as a candidate in the " + position.name + " race! Be sure to vote with /n vote <candidate_name>");
 		}
 	}
@@ -49,21 +48,27 @@ public class GovernmentElection implements Serializable {
 	@SuppressWarnings("deprecation")
 	public void endElection() {
 		int max = Integer.MIN_VALUE;
-		for(int i = 0; i < candidates.size(); i++) {
-			if(candidates.get(i).votes > max) {
-				max = candidates.get(i).votes;
+		for(int i = 0; i < nation.candidates.size(); i++) {
+			if(nation.candidates.get(i).votes > max) {
+				max = nation.candidates.get(i).votes;
 			}
 		}
 		
-		for(ElectionCandidate candidate : candidates) {
-			if(candidate.votes == max) {
-				
-				NationManager.getNationByCit(candidate.player).broadcastToCitizens(ChatColor.GOLD + "The Official Winner Of The Election Is " + candidate.player + "! This Candidate Received " + candidate.votes / population + "% Of The Countries Vote!");
-				
-				NationManager.getNationByCit(candidate.player).setMayor(Bukkit.getPlayer(candidate.player));
-				done = true;
+		try {
+			for(ElectionCandidate candidate : nation.candidates) {
+				if(candidate.votes == max) {
+					
+					NationManager.getNationByCit(candidate.player).broadcastToCitizens(ChatColor.GOLD + "The Official Winner Of The Election Is " + candidate.player + "! This Candidate Received " + (candidate.votes ) + " Of Votes!");
+					
+					NationManager.getNationByCit(candidate.player).setMayor(Bukkit.getPlayer(candidate.player));
+					nation.candidates.clear();
+					done = true;
+				}
 			}
+		}catch(Exception e) {
+			return;
 		}
+		
 		
 	}
 	
@@ -95,6 +100,11 @@ public class GovernmentElection implements Serializable {
 				voted.add(citizen);				
 			}
 		}
+		
+		public String getPlayer() {
+			return player;
+		}
+		
 	}
 	
 	public enum GovernmentOfficial {
