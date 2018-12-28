@@ -79,6 +79,7 @@ public class CitizenManager {
 				FileOutputStream ft = new FileOutputStream(PowerCivs.path + "/Players/" + cit.displayName + ".dat");
 				ObjectOutputStream os = new ObjectOutputStream(ft);
 				os.writeObject(cit);
+				os.close();
 				ft.flush();
 				ft.close();
 			}
@@ -95,6 +96,9 @@ public class CitizenManager {
 						int bal = Integer.valueOf(c.money);
 						
 						double take = bal * p.value;
+						
+						if(take < 0)
+							take = 5; //default tax collection is $5
 						
 						n.addCapital(take);
 						c.addMoney((int)-take);

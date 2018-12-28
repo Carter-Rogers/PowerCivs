@@ -25,9 +25,11 @@ public class Nation extends GovernmentEntity implements Serializable {
 
 	public NationType type;
 
+	public int indexDebt = 0; //once this hits 10, a nation is disbanded!
+	
 	protected String nationName;
 	protected String mayor;
-	protected double treasury;
+	public double treasury;
 	protected UUID mayorUUID;
 
 	protected ArrayList<Citizen> citizens = new ArrayList<Citizen>();
@@ -45,7 +47,7 @@ public class Nation extends GovernmentEntity implements Serializable {
 	public Nation(NationType type, String nationName, Player player) {
 		this.type = type;
 		this.nationName = nationName;
-		this.corporate = 0;
+		this.corporate = 2;
 		this.bank = new Bank(50.0d);
 
 		if (player != null) {
@@ -109,18 +111,14 @@ public class Nation extends GovernmentEntity implements Serializable {
 		}
 	}
 
-	public void removeCitizen(Citizen citizen) {
-		try {
-			for (Citizen c : citizens) {
-				if (c.displayName.equals(citizen.displayName)) {
-					citizens.remove(c);
-				} else {
-					continue;
-				}
+	public void removeCitizen(String name) {
+		int index = 0;
+		for(Citizen c : citizens) {
+			if(c.displayName.equals(name)) {
+				index = citizens.indexOf(c);
 			}
-		} catch (Exception e) {
-			return;
 		}
+		citizens.remove(index);
 	}
 
 	public void addPolicy(String name, double value, PolicyApplies applies) {

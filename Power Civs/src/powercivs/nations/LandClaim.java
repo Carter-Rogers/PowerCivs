@@ -1,24 +1,27 @@
 package powercivs.nations;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Random;
 
-import org.bukkit.Bukkit;
+import powercivs.PowerCivs;
 
 public class LandClaim implements Serializable{
 
 	private static final long serialVersionUID = 1L;
-	protected final String chX, chY;
-	protected final Nation owner;
-	protected final String owner_private; // for private claims
+	private String chX;
+	private String chY;
+	protected Nation owner;
+	protected String owner_private = null; // for private claims
 	
 	protected int claimAmount = 0;
 	
 	protected boolean capitalClaim = false;
+	protected boolean forsale = false;
 	
 	public LandClaim(String chX, String chY, Nation owner) {
-		this.chX = chX;
-		this.chY = chY;
+		this.setChX(chX);
+		this.setChY(chY);
 		this.owner = owner;
 		this.owner_private = "?";
 		
@@ -31,15 +34,16 @@ public class LandClaim implements Serializable{
 		ClaimManager.addClaim(this);
 	}
 	
-	@SuppressWarnings("deprecation")
+	public LandClaim(String chX, String chY, int val) {
+		this.setChX(chX);
+		this.setChY(chY);
+		claimAmount = val;
+	}
+	
 	public LandClaim(String chX, String chY, String owner_private) {
-		this.chX = chX;
-		this.chY = chY;
-		if(NationManager.getNationByCit(Bukkit.getPlayer(owner_private).getUniqueId().toString()) != null) {
-			this.owner = NationManager.getNationByCit(Bukkit.getPlayer(owner_private).getUniqueId().toString());
-		}else {			
-			this.owner = null;
-		}
+		this.setChX(chX);
+		this.setChY(chY);
+		this.owner = null;
 		this.owner_private = owner_private;
 		
 		Random r = new Random();
@@ -57,7 +61,7 @@ public class LandClaim implements Serializable{
 	}
 	
 	public String XandY() {
-		return chX + ", "+chY;
+		return getChX() + ","+getChY();
 	}
 	
 	public String getPrivateOwner() {
@@ -70,6 +74,67 @@ public class LandClaim implements Serializable{
 	
 	public boolean isCapitalClaim() {
 		return this.capitalClaim;
+	}
+	
+	public void setForsale(boolean tof) {
+		this.forsale = tof;
+	}
+	
+	public boolean isSelling() {
+		return forsale;
+	}
+	
+	public void removeLand() {
+		File f = new File(PowerCivs.path + "/Claims/" + this.getOwner() + "," + this.getChX() + ","
+				+ this.getChY() + ".dat");
+		this.owner = null;
+		this.owner_private = null;
+		f.delete();
+	}
+	
+	public void setPrivate(String owner) {
+		File f = new File(PowerCivs.path + "/Claims/" + this.getOwner() + "," + this.getChX() + ","
+				+ this.getChY() + ".dat");
+		this.owner = null;
+		f.delete();
+		int price = this.claimAmount;
+		String chX = this.chX;
+		String chY = this.chY;
+		
+		boolean remove = true;
+		if(remove) {
+			ClaimManager.removeClaim(chX, chY);
+			remove = false;
+		}
+		
+		LandClaim lc = new LandClaim(chX, chY, price);
+		ClaimManager.addClaim(lc);
+		ClaimManager.getClaim(chX, chY).owner_private = owner;
+		ClaimManager.saveClaims();
+	}
+	
+	public int getClaimAmount() {
+		return claimAmount;
+	}
+
+	public String getChX() {
+		return chX;
+	}
+
+	public void setChX(String chX) {
+		this.chX = chX;
+	}
+
+	public String getChY() {
+		return chY;
+	}
+
+	public void setOwner(Nation owner) {
+		this.owner = owner;
+	}
+	
+	public void setChY(String chY) {
+		this.chY = chY;
 	}
 	
 }

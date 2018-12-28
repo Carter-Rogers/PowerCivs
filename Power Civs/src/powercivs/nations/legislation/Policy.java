@@ -38,6 +38,10 @@ public class Policy implements Serializable{
 		return value;
 	}
 	
+	public double dispValue() {
+		return value *= 100;
+	}
+	
 	public static enum PolicyApplies implements Serializable {
 		
 		CITIZENS("citizens");

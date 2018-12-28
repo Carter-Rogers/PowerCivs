@@ -19,6 +19,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -51,6 +52,8 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 
 	boolean loaded = false;
 
+	public static String DATA_FOLDER;
+
 	protected String[] messages = {
 			"Remember To Register Your Corporation Or You May Be Arrested Or Have A Bounty Put On You! Remember Registering Is Optional Though!",
 			"Declaring War On A Nation Costs $250! Make sure you have enough money by depositing into your nation!",
@@ -70,6 +73,8 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 	public void onEnable() {
 
 		Bukkit.getPluginManager().registerEvents(this, this);
+
+		DATA_FOLDER = getDataFolder().getAbsolutePath();
 
 		getDataFolder().mkdir();
 		new File(getDataFolder().getAbsolutePath() + "/Players").mkdir();
@@ -98,6 +103,9 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 					val = messages.length;
 
 				Bukkit.getServer().broadcastMessage(ChatColor.GOLD + messages[val]);
+
+				NationManager.updateNations();
+
 				index += 1;
 
 				for (Corporation corp : CorporationManager.corporations) {
@@ -244,52 +252,58 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 		}
 
 		if (cmd.getName().equalsIgnoreCase("register")) {
-			String type = args[0];
-			String name = args[1];
-			String ty;
-			try {
-				ty = args[2];
-			} catch (Exception e) {
-				ty = "dem";
-			}
 
-			if (type.equalsIgnoreCase("n") || type.equalsIgnoreCase("nation")) {
-				Player p = (Player) sender;
-
-				NationType ntype = NationType.DEMOCRATIC;
-
-				switch (ty) {
-				case "dem":
-					ntype = NationType.DEMOCRATIC;
-					break;
-				case "democratic":
-					ntype = NationType.DEMOCRATIC;
-					break;
-				}
-
-				Nation n = NationManager.getNationByCit(((Player) sender).getDisplayName());
-
-				if (n == null) {
-					if (NationManager.registerNation(new Nation(ntype, name, p))) {
-						saveNations();
-						CitizenManager.getCitizen(p.getDisplayName()).addMoney(-50);
-					}
-					return true;
-				} else {
-					((Player) sender)
-							.sendMessage(ChatColor.RED + "You Cannot Register More Than One Nation At A Time!");
-
-					return true;
-				}
-			}
-
-			if (type.equalsIgnoreCase("c") || type.equalsIgnoreCase("corporation")) {
-				Corporation c = new Corporation(name, ((Player) sender).getUniqueId());
-				CorporationManager.registerCorporation(c);
-				CitizenManager.getCitizen(((Player) sender).getDisplayName()).addMoney(-100);
+			if (args.length <= 0) {
+				((Player) sender).sendMessage(ChatColor.BLUE + "EX: /register <nation/corporation> <name>");
 				return true;
+			} else {
+				String type = args[0];
+				String name = args[1];
+				String ty;
+				try {
+					ty = args[2];
+				} catch (Exception e) {
+					ty = "dem";
+				}
+
+				if (type.equalsIgnoreCase("n") || type.equalsIgnoreCase("nation")) {
+					Player p = (Player) sender;
+
+					NationType ntype = NationType.DEMOCRATIC;
+
+					switch (ty) {
+					case "dem":
+						ntype = NationType.DEMOCRATIC;
+						break;
+					case "democratic":
+						ntype = NationType.DEMOCRATIC;
+						break;
+					}
+
+					Nation n = NationManager.getNationByCit(((Player) sender).getDisplayName());
+
+					if (n == null) {
+						if (NationManager.registerNation(new Nation(ntype, name, p))) {
+							saveNations();
+							CitizenManager.getCitizen(p.getDisplayName()).addMoney(-50);
+						}
+						return true;
+					} else {
+						((Player) sender)
+								.sendMessage(ChatColor.RED + "You Cannot Register More Than One Nation At A Time!");
+
+						return true;
+					}
+				}
+				if (type.equalsIgnoreCase("c") || type.equalsIgnoreCase("corporation")) {
+					Corporation c = new Corporation(name, ((Player) sender).getUniqueId());
+					CorporationManager.registerCorporation(c);
+					CitizenManager.getCitizen(((Player) sender).getDisplayName()).addMoney(-100);
+					return true;
+				}
 			}
 
+			return true;
 		}
 
 		if (cmd.getName().equalsIgnoreCase("list")) {
@@ -367,49 +381,10 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 					return true;
 				} else {
 					((Player) sender).sendMessage(ChatColor.RED + " You Cannot Claim This Area!");
-				}
-			} else {
-				String nation = args[0];
-				Nation n = NationManager.getNation(nation);
-
-				if (n != null) {
-					if (n.getUUID() == null) {
-						Chunk cc = ((Player) sender).getWorld().getChunkAt(((Player) sender).getLocation());
-						String cX = "" + cc.getX();
-						String cY = "" + cc.getZ();
-
-						if (ClaimManager.getClaim(cX, cY) == null) {
-							@SuppressWarnings("unused")
-							LandClaim lc = new LandClaim(cX, cY, n);
-							((Player) sender).sendMessage(ChatColor.BLUE + "Successfully Claimed This Chunk!");
-							ClaimManager.saveClaims();
-							return true;
-						} else {
-							((Player) sender).sendMessage(ChatColor.RED + " You Cannot Claim This Area!");
-							return true;
-						}
-					}
-					if (n.getUUID().equals(((Player) sender).getUniqueId())) {
-
-						Chunk cc = ((Player) sender).getWorld().getChunkAt(((Player) sender).getLocation());
-						String cX = "" + cc.getX();
-						String cY = "" + cc.getZ();
-
-						if (ClaimManager.getClaim(cX, cY) == null) {
-							@SuppressWarnings("unused")
-							LandClaim lc = new LandClaim(cX, cY, n);
-							((Player) sender).sendMessage(ChatColor.BLUE + "Successfully Claimed This Chunk!");
-							ClaimManager.saveClaims();
-							return true;
-						} else {
-							((Player) sender).sendMessage(ChatColor.RED + " You Cannot Claim This Area!");
-							return true;
-						}
-					}
 					return true;
 				}
-				return true;
 			}
+			return true;
 		}
 
 		if (cmd.getName().equalsIgnoreCase("n") || cmd.getName().equalsIgnoreCase("nation")) {
@@ -425,6 +400,84 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 				p.sendMessage("/n ct <value> : Changes your nation's corporate tax rate on registered corporations.");
 				p.sendMessage("/n war <nation> : Engages two nations in war if the starting nation has $250!");
 				p.sendMessage("/n warend <nation> : Ends war between two nations!");
+			}
+
+			if (command.equalsIgnoreCase("leave")) {
+				Nation n = NationManager.getNationByCit((((Player) sender).getDisplayName()));
+
+				if (n != null) {
+
+					if (n.getMayor().equals((((Player) sender).getDisplayName())))
+						((Player) sender)
+								.sendMessage(ChatColor.RED + "You Cannot Leave A Nation That You're The Leader Of!");
+					else {
+						n.removeCitizen(((Player) sender).getDisplayName());
+						((Player) sender).sendMessage(ChatColor.GREEN + "Sucessfully Left The Nation!");
+					}
+
+					return true;
+				}
+
+				return true;
+			}
+			
+			if(command.equalsIgnoreCase("kick")) {
+				String player = args[1];
+				
+				Nation n = NationManager.getNationByCit((((Player)sender).getDisplayName()));
+				
+				if(n.getMayor().equals(((Player)sender).getDisplayName())) {
+					NationManager.getNationByCit(((Player)sender).getDisplayName()).removeCitizen(player);
+					((Player)sender).sendMessage(ChatColor.GREEN + "Successfully Removed Citizen!");
+				}else {
+					((Player)sender).sendMessage(ChatColor.RED + "You Can't Do That!");
+				}		
+				
+				return true;
+			}
+
+			if (command.equalsIgnoreCase("newplot")) {
+				if (NationManager.getNationByCit(((Player) sender).getDisplayName()).getMayor()
+						.equals(((Player) sender).getDisplayName())) {
+					Chunk c = ((Player) sender).getWorld().getChunkAt(((Player) sender).getLocation());
+					LandClaim claim = ClaimManager.getClaim("" + c.getX(), "" + c.getZ());
+
+					if (claim.getOwner()
+							.equals(NationManager.getNationByCit(((Player) sender).getDisplayName()).getNationName())) {
+						ClaimManager.forSale("" + c.getX(), "" + c.getZ(), true);
+						NationManager.getNationByCit(((Player) sender).getDisplayName()).broadcastToCitizens(
+								"A New Plot Has Just Been Put Up For Sale At: $" + claim.getClaimAmount());
+					} else {
+						((Player) sender).sendMessage(ChatColor.RED + "Invalid Permissions!");
+					}
+				}
+				return true;
+			}
+
+			if (command.equalsIgnoreCase("buyplot")) {
+				Chunk c = ((Player) sender).getWorld().getChunkAt(((Player) sender).getLocation());
+				LandClaim claim = ClaimManager.getClaim("" + c.getX(), "" + c.getZ());
+
+				if (claim.isSelling()) {
+					if (claim.getOwner() != null || claim.getOwner() != "?") {
+						if (claim.getOwner().equals(
+								NationManager.getNationByCit(((Player) sender).getDisplayName()).getNationName())) {
+							if (CitizenManager.getCitizen(((Player) sender).getDisplayName()).getMoney() >= claim
+									.getClaimAmount()) {
+
+								if (ClaimManager.getClaim("" + c.getX(), "" + c.getZ()) != null) {
+									ClaimManager.getClaim("" + c.getX(), "" + c.getZ())
+											.setPrivate(((Player) sender).getDisplayName());
+									;
+								}
+							}
+						}
+					}
+
+				}
+
+				return true;
+
 			}
 
 			if (command.equalsIgnoreCase("assets")) {
@@ -470,10 +523,89 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 				return true;
 			}
 
-			if (command.equalsIgnoreCase("remove")) {
-				Nation n = NationManager.getNation(args[1]);
+			if (command.equalsIgnoreCase("claim")) {
+				Nation n = NationManager.getNationByCit(((Player) sender).getDisplayName());
 
 				if (n != null) {
+					if (n.getMayor() == null) {
+						Chunk cc = ((Player) sender).getWorld().getChunkAt(((Player) sender).getLocation());
+						String cX = "" + cc.getX();
+						String cY = "" + cc.getZ();
+
+						if (ClaimManager.getClaim(cX, cY) == null) {
+							@SuppressWarnings("unused")
+							LandClaim lc = new LandClaim(cX, cY, n);
+							((Player) sender).sendMessage(ChatColor.BLUE + "Successfully Claimed This Chunk!");
+							ClaimManager.saveClaims();
+							return true;
+						} else {
+							((Player) sender).sendMessage(ChatColor.RED + " You Cannot Claim This Area!");
+							return true;
+						}
+					}
+					if (n.getMayor().equals(((Player) sender).getDisplayName())) {
+
+						Chunk cc = ((Player) sender).getWorld().getChunkAt(((Player) sender).getLocation());
+						String cX = "" + cc.getX();
+						String cY = "" + cc.getZ();
+
+						if (ClaimManager.getClaim(cX, cY) == null) {
+							@SuppressWarnings("unused")
+							LandClaim lc = new LandClaim(cX, cY, n);
+							((Player) sender).sendMessage(ChatColor.BLUE + "Successfully Claimed This Chunk!");
+							ClaimManager.saveClaims();
+							return true;
+						} else {
+							((Player) sender).sendMessage(ChatColor.RED + " You Cannot Claim This Area!");
+							return true;
+						}
+					} else {
+						((Player) sender)
+								.sendMessage(ChatColor.RED + "You Do Not Have The Nation Permission To Do That!");
+					}
+					return true;
+				}
+			}
+
+			if (command.equalsIgnoreCase("remove")) {
+				try {
+					Nation n = NationManager.getNation(args[1]);
+
+					if (n != null) {
+
+						if (n.getMayor().equalsIgnoreCase(((Player) sender).getName())) {
+							Bukkit.broadcastMessage(ChatColor.BLUE + n.getNationName() + " Has Fallen! RIP");
+
+							File directory = new File(PowerCivs.path + "/Claims");
+
+							File[] list = directory.listFiles();
+
+							for (File ff : list) {
+								if (ff.isFile()) {
+									if (ff.getAbsolutePath().contains(n.getNationName()))
+										ff.delete();
+								}
+							}
+
+							File f = new File(path + "/" + n.getNationName() + ".dat");
+							File f1 = new File(path + "/" + n.getNationName() + "_bank.dat");
+							f.delete();
+							f1.delete();
+
+							CitizenManager.getCitizen(n.getMayor()).addMoney((int) n.getTreasury());
+
+							NationManager.removeNation(n.getNationName());
+							ClaimManager.reload();
+							return true;
+						} else if (!n.getMayor().equalsIgnoreCase(((Player) sender).getName())) {
+							Bukkit.getPlayer(((Player) sender).getUniqueId())
+									.sendMessage(ChatColor.RED + "You Cannot Remove That Nation!");
+							return true;
+						}
+						return true;
+					}
+				} catch (Exception e) {
+					Nation n = NationManager.getNationByCit((((Player) sender).getDisplayName()));
 
 					if (n.getMayor().equalsIgnoreCase(((Player) sender).getName())) {
 						Bukkit.broadcastMessage(ChatColor.BLUE + n.getNationName() + " Has Fallen! RIP");
@@ -497,7 +629,6 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 						CitizenManager.getCitizen(n.getMayor()).addMoney((int) n.getTreasury());
 
 						NationManager.removeNation(n.getNationName());
-						ClaimManager.removeClaim(n.getNationName(), false);
 						ClaimManager.reload();
 						return true;
 					} else if (!n.getMayor().equalsIgnoreCase(((Player) sender).getName())) {
@@ -505,8 +636,9 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 								.sendMessage(ChatColor.RED + "You Cannot Remove That Nation!");
 						return true;
 					}
-					return true;
 				}
+
+				return true;
 			}
 
 			if (command.equalsIgnoreCase("info")) {
@@ -516,7 +648,7 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 					Nation n = NationManager.getNation(args[1]);
 
 					if (n != null) {
-						p.sendMessage(ChatColor.GREEN + "        Nation Info        ");
+						p.sendMessage(ChatColor.GREEN + "~~~~~~~~~Nation Info~~~~~~~~~");
 						p.sendMessage("");
 						p.sendMessage(ChatColor.GOLD + "NAME: " + ChatColor.DARK_GREEN + n.getNationName());
 						p.sendMessage(ChatColor.GOLD + "GOVERNMENT TYPE: " + ChatColor.DARK_GREEN + n.getType());
@@ -533,7 +665,7 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 						if (n.policies.size() <= 0) {
 						} else {
 							for (Policy pp : n.policies) {
-								sbb.append(ChatColor.GREEN + pp.getPolicyName() + ": " + pp.value + "% ,");
+								sbb.append(ChatColor.GREEN + pp.getPolicyName() + ": " + pp.dispValue() + "% ,");
 							}
 						}
 						p.sendMessage(ChatColor.GOLD + "OTHER POLICIES: " + sbb.toString());
@@ -547,6 +679,11 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 						}
 
 						p.sendMessage(ChatColor.GOLD + "WARS: " + ChatColor.RED + sb.toString());
+
+						if (n.getTreasury() < 0.0)
+							p.sendMessage(ChatColor.RED + "THIS NATION IS IN DEBT!");
+
+						p.sendMessage("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 						return true;
 					} else {
 						p.sendMessage(ChatColor.RED + "No Such Nation!");
@@ -557,7 +694,7 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 					Nation n = NationManager.getNationByCit(((Player) sender).getDisplayName());
 
 					if (n != null) {
-						p.sendMessage(ChatColor.GREEN + "        Nation Info        ");
+						p.sendMessage(ChatColor.WHITE + "~~~~~~~~~Nation Info~~~~~~~~~");
 						p.sendMessage("");
 						p.sendMessage(ChatColor.GOLD + "NAME: " + ChatColor.DARK_GREEN + n.getNationName());
 						p.sendMessage(ChatColor.GOLD + "GOVERNMENT TYPE: " + ChatColor.DARK_GREEN + n.getType());
@@ -588,6 +725,10 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 						}
 
 						p.sendMessage(ChatColor.GOLD + "WARS: " + ChatColor.RED + sb.toString());
+						if (n.getTreasury() < 0.0D)
+							p.sendMessage(ChatColor.RED + "THIS NATION IS IN DEBT!");
+
+						p.sendMessage("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 					}
 
 					return true;
@@ -643,6 +784,11 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 
 				double value = Double.parseDouble(args[1]);
 
+				if(value >= 70.0)
+					value = 70.0D;
+				if(value <= 2.0D)
+					value = 2.0D;
+				
 				Nation n = NationManager.playerBelongs(((Player) sender));
 
 				if (n != null) {
@@ -650,20 +796,6 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 						n.setCorporateRate(value);
 						Bukkit.broadcastMessage(ChatColor.GREEN + "The Mayor Of " + n.getNationName()
 								+ " Has Set The Corporate Tax Rate To " + ChatColor.RED + n.getCorporateRate() + "%!");
-					}
-				}
-
-				return true;
-			}
-
-			if (command.equalsIgnoreCase("remove")) {
-
-				String name = args[1];
-				Nation n = NationManager.playerBelongs(((Player) sender));
-
-				if (n != null) {
-					if (n.getMayor().equals(((Player) sender).getName())) {
-						n.removeCitizen(CitizenManager.getCitizen(name));
 					}
 				}
 
@@ -683,6 +815,7 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 				}
 
 				return true;
+
 			}
 
 			if (command.equalsIgnoreCase("war")) {
@@ -734,48 +867,56 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 				return true;
 			}
 
-			if(command.equalsIgnoreCase("vote")) {
+			if (command.equalsIgnoreCase("vote")) {
 				String candidate = args[1];
-				
-				Nation n = NationManager.getNationByCit(((Player)sender).getDisplayName());
-				
-				try {
-					if(n.getCandidate(candidate) != null) {
-						n.getCandidate(candidate).addVote(((Player)sender).getDisplayName());
-						((Player)sender).sendMessage(ChatColor.GREEN + "Voted Successfully! So far " + n.presidential.population);
-					} 
-				}catch(Exception e) {
-					e.printStackTrace();
-				}
-				
-				return true;
-			}
-			
-			if (command.equalsIgnoreCase("election")) {
-				String type = args[1];
 
 				Nation n = NationManager.getNationByCit(((Player) sender).getDisplayName());
 
-				if (type.equals("register")) {
-					if(n == null)
-						Bukkit.broadcastMessage("error");
-					else
-						n.presidential.registerCandidate(new GovernmentElection.ElectionCandidate(((Player)sender).getDisplayName()));
-				}else if(type.equals("end")) {
-						n.presidential.endElection();
-					return true;
-				}else {
-					if (n != null) {
-						if (n.getMayor().equals(((Player) sender).getName())) {
-							switch (type.toLowerCase()) {
-							case "president":
-								n.newElection(GovernmentOfficial.PRESIDENT);
-								break;
-							}
-							return true;
-						}
+				try {
+					if (n.getCandidate(candidate) != null) {
+						n.getCandidate(candidate).addVote(((Player) sender).getDisplayName());
+						((Player) sender).sendMessage(
+								ChatColor.GREEN + "Voted Successfully! So far " + n.presidential.population);
 					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 
+				return true;
+			}
+
+			if (command.equalsIgnoreCase("election")) {
+
+				if (args.length <= 1) {
+					((Player) sender).sendMessage(
+							ChatColor.BLUE + "EX: /n election <type> OR /n election register(register for election)");
+				} else {
+					String type = args[1];
+
+					Nation n = NationManager.getNationByCit(((Player) sender).getDisplayName());
+
+					if (type.equals("register")) {
+						if (n == null)
+							Bukkit.broadcastMessage("error");
+						else
+							n.presidential.registerCandidate(
+									new GovernmentElection.ElectionCandidate(((Player) sender).getDisplayName()));
+					} else if (type.equals("end")) {
+						n.presidential.endElection();
+						return true;
+					} else {
+						if (n != null) {
+							if (n.getMayor().equals(((Player) sender).getName())) {
+								switch (type.toLowerCase()) {
+								case "president":
+									n.newElection(GovernmentOfficial.PRESIDENT);
+									break;
+								}
+								return true;
+							}
+						}
+
+					}
 				}
 
 				return true;
@@ -788,15 +929,19 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 
 				Nation n = NationManager.getNationByCit(cc.getDisplayName());
 
-				Bukkit.broadcastMessage(n.getNationName());
-
 				if (n != null) {
 					Citizen c = CitizenManager.getCitizen(((Player) sender).getDisplayName());
 
 					if (c.getMoney() >= amount) {
-						n.addCapital(amount);
-						c.addMoney(-amount);
-						((Player) sender).sendMessage(ChatColor.GREEN + "Successfully Deposited $" + amount + "!");
+						
+						if(amount <= 0) {
+							((Player) sender).sendMessage(ChatColor.RED + "You Can't Do That!");							
+						}else {
+							n.addCapital(amount);
+							c.addMoney(-amount);
+							((Player) sender).sendMessage(ChatColor.GREEN + "Successfully Deposited $" + amount + "!");
+						}
+						
 						return true;
 					} else {
 						((Player) sender).sendMessage(ChatColor.RED + "Not Enough Money To Do That!");
@@ -814,8 +959,11 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 
 			Citizen c = CitizenManager.getCitizen(((Player) sender).getDisplayName());
 
-			if(c != null)
-				((Player) sender).sendMessage(ChatColor.GREEN + "Balance: $" + c.getMoney());
+			DecimalFormat df = new DecimalFormat();
+			df.setMaximumFractionDigits(2);
+
+			if (c != null)
+				((Player) sender).sendMessage(ChatColor.GREEN + "Balance: $" + df.format(c.getMoney()));
 
 			return true;
 		}
@@ -849,6 +997,13 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 			return true;
 		}
 
+		if (((Player) sender).isOp() && cmd.getName().equalsIgnoreCase("money")) {
+			String player = args[0];
+			int amount = Integer.parseInt(args[1]);
+
+			CitizenManager.getCitizen(player).addMoney(amount);
+		}
+
 		return false;
 	}
 
@@ -862,47 +1017,6 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 	}
 
 	@EventHandler
-	public void onBlockBreak(BlockBreakEvent e) {
-		Player p = (Player) e.getPlayer();
-		Block b = (Block) e.getBlock();
-
-		Chunk c = b.getWorld().getChunkAt(b.getLocation());
-
-		LandClaim cc = ClaimManager.getClaim("" + c.getX(), "" + c.getZ());
-
-		Nation n = NationManager.getNationByCit(p.getDisplayName());
-
-		if (cc != null) {
-			if (cc.getOwner() == null || cc.getOwner().equals("?")) {
-				if (cc.getPrivateOwner().equals(p.getDisplayName()) || NationManager.getNationByCit(cc.getPrivateOwner()).getMayor().equals(p.getDisplayName())) {
-					return;
-				}else if (!cc.getPrivateOwner().equals(p.getDisplayName())) {
-					try {
-						String nOwner = Bukkit.getPlayer(n.getUUID()).getDisplayName();
-						if (p.getDisplayName().equals(nOwner))
-							return;
-						else
-							e.setCancelled(true);
-					}catch(Exception ee) {
-						return;
-					}
-				}
-				else {
-					e.setCancelled(true);
-				}
-			}
-			
-			if (cc.getOwner().equals(n.getNationName()) || cc.getPrivateOwner().equals(p.getDisplayName())
-					|| NationManager.getNation(cc.getOwner()).isEnemy(n.getNationName())) {
-				e.setCancelled(false);
-			} else {
-				e.setCancelled(true);
-			}
-		}
-
-	}
-
-	@EventHandler
 	public void onBlockPlace(BlockPlaceEvent e) {
 		Player p = (Player) e.getPlayer();
 		Block b = (Block) e.getBlock();
@@ -910,95 +1024,180 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 		Chunk c = b.getWorld().getChunkAt(b.getLocation());
 		LandClaim cc = ClaimManager.getClaim("" + c.getX(), "" + c.getZ());
 
-		Nation n = NationManager.getNationByCit(p.getDisplayName());
-
-		if (cc == null) {
+		
+		if(cc == null) {
 			e.setCancelled(false);
 		} else {
-			if (cc.getOwner() == null || cc.getOwner().equals("?")) {
-				if (cc.getPrivateOwner().equals(p.getDisplayName()) || NationManager.getNationByCit(cc.getPrivateOwner()).getMayor().equals(p.getDisplayName())) {
-					return;
-				}else if (!cc.getPrivateOwner().equals(p.getDisplayName())) {
-					try {
-						String nOwner = Bukkit.getPlayer(n.getUUID()).getDisplayName();
-						if (p.getDisplayName().equals(nOwner))
-							return;
-						else
-							e.setCancelled(true);
-					}catch(Exception ee) {
-						return;
-					}
+			Nation n = NationManager.getNation(cc.getOwner());
+			if(n == null) {
+				if(cc.getPrivateOwner().equals(p.getDisplayName())) {
+					e.setCancelled(false);
+				}else {
+					e.setCancelled(true);
 				}
-				else {
+			}else {
+				if(NationManager.getNationByCit(p.getDisplayName()) != null) {
+					if(NationManager.getNationByCit(p.getDisplayName()).getNationName().equals(cc.getOwner())) {
+						e.setCancelled(false);
+					}else {
+						e.setCancelled(true);
+					}
+				}else {
 					e.setCancelled(true);
 				}
 			}
 			
-			if (cc.getOwner().equals(n.getNationName()) || cc.getPrivateOwner().equals(p.getDisplayName())
-					|| NationManager.getNation(cc.getOwner()).isEnemy(n.getNationName())) {
-				e.setCancelled(false);
-			} else {
+		}
+	}
+
+	@EventHandler
+	public void onPlayerUse(PlayerInteractEvent e) {
+		Player p = (Player) e.getPlayer();
+		Block b = (Block) e.getClickedBlock();
+
+		Chunk c = b.getWorld().getChunkAt(b.getLocation());
+		LandClaim cc = ClaimManager.getClaim("" + c.getX(), "" + c.getZ());
+
+		
+		if(cc == null) {
+			e.setCancelled(false);
+		} else {
+			Nation n = NationManager.getNation(cc.getOwner());
+			if(n == null) {
+				if(cc.getPrivateOwner().equals(p.getDisplayName())) {
+					e.setCancelled(false);
+				}else {
+					if(NationManager.getNationByCit(cc.getPrivateOwner()) != null) {
+						if(NationManager.getNationByCit(cc.getPrivateOwner()).getMayor().equals(p.getDisplayName())) {
+							e.setCancelled(false);
+						}else {
+							e.setCancelled(true);
+						}
+					}else {						
+						e.setCancelled(true);
+					}
+					e.setCancelled(true);
+				}
+			}else {
+				if(NationManager.getNationByCit(p.getDisplayName()) != null) {
+					if(NationManager.getNationByCit(p.getDisplayName()).getNationName().equals(cc.getOwner())) {
+						e.setCancelled(false);
+					}else {
+						e.setCancelled(true);
+					}
+				}else {
+					e.setCancelled(true);
+				}
+			}
+			
+		}
+		
+	}
+	
+	@EventHandler
+	public void onHit(EntityDamageEvent e) {
+		if(e.getEntity() instanceof Player) {
+			Chunk c = ((Player)e.getEntity()).getWorld().getChunkAt(e.getEntity().getLocation());
+			LandClaim lc = ClaimManager.getClaim(""+c.getX(),""+c.getZ());
+			
+			if(lc.getOwner().equalsIgnoreCase("Spawn")) {
 				e.setCancelled(true);
 			}
 		}
+	}
+	
+	@EventHandler
+	public void onBlockBreak(BlockBreakEvent e) {
+		Player p = (Player) e.getPlayer();
+		Block b = (Block) e.getBlock();
 
+		Chunk c = b.getWorld().getChunkAt(b.getLocation());
+		LandClaim cc = ClaimManager.getClaim("" + c.getX(), "" + c.getZ());
+
+		if(cc == null) {
+			e.setCancelled(false);
+		}else {
+			Nation n = NationManager.getNation(cc.getOwner());
+			
+			if(n == null) {
+				if(cc.getPrivateOwner().equals(p.getDisplayName())) {
+					e.setCancelled(false);
+				}else {
+					e.setCancelled(true);
+				}
+			}else {
+				if(NationManager.getNationByCit(p.getDisplayName()) != null) {
+					if(NationManager.getNationByCit(p.getDisplayName()).getNationName().equals(cc.getOwner())) {
+						e.setCancelled(false);
+					}else {
+						e.setCancelled(true);
+					}
+				}else {
+					e.setCancelled(true);
+				}
+			}
+			
+		}
+		
 	}
 
+	
 	@EventHandler
 	public void onMove(PlayerMoveEvent e) {
 		Player p = (Player) e.getPlayer();
 
 		Citizen cit = CitizenManager.getCitizen(p.getDisplayName());
 
-		if (cit != null) {
-			Chunk c = p.getWorld().getChunkAt(p.getLocation());
-			LandClaim cc = ClaimManager.getClaim("" + c.getX(), "" + c.getZ());
+		Chunk c = p.getWorld().getChunkAt(p.getLocation());
+		LandClaim cc = ClaimManager.getClaim("" + c.getX(), "" + c.getZ());
 
-			if (cc == null) {
-				if (cit.lastLocation != "NULL") {
+		if (cc != null) { // land claim exists
+
+			if (cc.getOwner().equals("?") || cc.getOwner() == null) {
+				if (!cc.getPrivateOwner().equals("?") || !cc.getPrivateOwner().equals(null)) { // private claim with or
+																								// without nation!
+					if (cit.lastLocation != cc.getPrivateOwner()) {
+						PacketPlayOutTitle packet = new PacketPlayOutTitle(EnumTitleAction.TITLE, ChatSerializer.a(
+								"{\"text\":\"" + ChatColor.BLUE + "Entering " + cc.getPrivateOwner() + "'s Land!\"}"),
+								20, 60, 20);
+						((CraftPlayer) p).getHandle().playerConnection.sendPacket(packet);
+						cit.lastLocation = cc.getPrivateOwner();
+
+						if (NationManager.getNationByCit(cc.getPrivateOwner()) != null) {
+							PacketPlayOutTitle pt = new PacketPlayOutTitle(EnumTitleAction.SUBTITLE,
+									ChatSerializer.a("{\"text\":\"" + ChatColor.RED + "Owned By "
+											+ NationManager.getNationByCit(cc.getPrivateOwner()).getNationName()
+											+ "\"}"),
+									20, 60, 20);
+							((CraftPlayer) p).getHandle().playerConnection.sendPacket(pt);
+						}
+
+					}
+				}
+			} else {
+				if (!cit.lastLocation.equals(cc.getOwner())) {
 					PacketPlayOutTitle packet = new PacketPlayOutTitle(EnumTitleAction.TITLE,
-							ChatSerializer.a("{\"text\":\"" + ChatColor.BLUE + "Leaving " + cit.lastLocation + "'s Claim\"}"),
+							ChatSerializer
+									.a("{\"text\":\"" + ChatColor.BLUE + "Entering " + cc.getOwner() + "'s Land!\"}"),
 							20, 60, 20);
 					((CraftPlayer) p).getHandle().playerConnection.sendPacket(packet);
-				}
-				cit.lastLocation = "NULL";
-			} else {
-
-				if (cc.getOwner() != "?") {
-					if (!cit.lastLocation.equals(cc.getOwner())) {
-						
-						
-						PacketPlayOutTitle packet = new PacketPlayOutTitle(EnumTitleAction.TITLE,
-								ChatSerializer.a("{\"text\":\"" + ChatColor.BLUE + "Entering " + cc.getOwner() + "\"}"),
-								20, 60, 20);
-						
-						((CraftPlayer) p).getHandle().playerConnection.sendPacket(packet);
-						cit.lastLocation = cc.getOwner();
-					}
-				} else {
-					if (!cit.lastLocation.equals(cc.getPrivateOwner())) {
-						PacketPlayOutTitle packet = new PacketPlayOutTitle(EnumTitleAction.TITLE,
-								ChatSerializer.a(
-										"{\"text\":\"" + ChatColor.GOLD + "Entering " + cc.getPrivateOwner() + "'s Claim\"}"),
-								20, 60, 20);
-						
-						((CraftPlayer) p).getHandle().playerConnection.sendPacket(packet);
-						if(cc.getPrivateOwner() != null || cc.getPrivateOwner() != "?") {
-							PacketPlayOutTitle pt = new PacketPlayOutTitle(EnumTitleAction.SUBTITLE,
-									ChatSerializer.a(
-											"{\"text\":\"" + ChatColor.RED + "Owned By " + NationManager.getNationByCit(cc.getPrivateOwner()).getNationName() + "\"}"),
-									20, 60, 20);							
-							((CraftPlayer) p).getHandle().playerConnection.sendPacket(pt);							
-						}else {							
-							cit.lastLocation = cc.getPrivateOwner();
-						}
-						
-						cit.lastLocation = cc.getPrivateOwner();						
-					}
+					cit.lastLocation = cc.getOwner();
 				}
 			}
-		}
 
+		} else if (cc == null) {
+			if (cit.lastLocation != "NULL") {
+				PacketPlayOutTitle packet = new PacketPlayOutTitle(EnumTitleAction.TITLE,
+						ChatSerializer
+								.a("{\"text\":\"" + ChatColor.BLUE + "Leaving " + cit.lastLocation + "'s Land\"}"),
+						20, 60, 20);
+				((CraftPlayer) p).getHandle().playerConnection.sendPacket(packet);
+				cit.lastLocation = "NULL";
+			} else {
+				cit.lastLocation = "NULL";
+			}
+			cit.lastLocation = "NULL";
+		}
 	}
 
 	@EventHandler
@@ -1030,49 +1229,6 @@ public final class PowerCivs extends JavaPlugin implements Listener {
 			} catch (Exception ee) {
 				e.setCancelled(true);
 			}
-
-		}
-
-	}
-
-	@EventHandler
-	public void onPlayerUse(PlayerInteractEvent e) {
-		Player p = (Player) e.getPlayer();
-		Block b = e.getClickedBlock();
-
-		Chunk c = b.getWorld().getChunkAt(b.getLocation());
-		LandClaim cc = ClaimManager.getClaim("" + c.getX(), "" + c.getZ());
-
-		if (cc == null) {
-			return;
-		}
-		
-		Nation n = NationManager.getNationByCit(p.getDisplayName());
-
-		if (cc.getOwner() == null || cc.getOwner().equals("?")) {
-			if (cc.getPrivateOwner().equals(p.getDisplayName()) || NationManager.getNationByCit(cc.getPrivateOwner()).getMayor().equals(p.getDisplayName())) {
-				return;
-			}else if (!cc.getPrivateOwner().equals(p.getDisplayName())) {
-				try {
-					String nOwner = Bukkit.getPlayer(n.getUUID()).getDisplayName();
-					if (p.getDisplayName().equals(nOwner))
-						return;
-					else
-						e.setCancelled(true);
-				}catch(Exception ee) {
-					return;
-				}
-			}
-			else {
-				e.setCancelled(true);
-			}
-		}
-		
-		if (cc.getOwner().equals(n.getNationName()) || cc.getPrivateOwner().equals(p.getDisplayName())
-				|| NationManager.getNation(cc.getOwner()).isEnemy(n.getNationName())) {
-			e.setCancelled(false);
-		} else {
-			e.setCancelled(true);
 		}
 
 	}

@@ -60,23 +60,21 @@ public class NationManager implements Serializable {
 	}
 	
 	public static boolean registerNation(Nation n) {
-		boolean found = false;
-
-		for (Nation nn : nations) {
-			if (nn.nationName.equals(n.nationName))
-				found = true;
-			else {
-				found = false;
-			}
-		}
-
-		if (!found) {
+		if(nations.size() <= 0) {
 			nations.add(n);
-			Bukkit.broadcastMessage(ChatColor.GOLD + n.nationName + " Has Been Created! Watch Out World!");
-			return true;
-		} else {
-			return false;
+			Bukkit.broadcastMessage(ChatColor.BLUE + n.getNationName() + " has been founded! Lookout world!");
+		}else {
+			for(Nation nation : nations) {
+				if(nation.getNationName().equals(n.getNationName())) {
+					return false;
+				}else {
+					nations.add(n);
+					Bukkit.broadcastMessage(ChatColor.BLUE + n.getNationName() + " has been founded! Lookout world!");
+					return true;
+				}
+			}	
 		}
+		return false;
 	}
 
 	public static Nation getNation(String name) {
@@ -90,13 +88,11 @@ public class NationManager implements Serializable {
 		return null;
 	}
 	
-	public static Nation getNationByCit(String uuid) {
-		for(Nation n : nations) {
-			for(Citizen c : n.citizens) {
-				if(c.displayName.equals(uuid)) {
-					return n;
-				}else {
-					continue;
+	public static Nation getNationByCit(String player) {
+		for(Nation nation : nations) {
+			for(Citizen c : nation.citizens) {
+				if(c.getDisplayName().equals(player)) {
+					return nation;
 				}
 			}
 		}
@@ -112,10 +108,11 @@ public class NationManager implements Serializable {
 
 	public static Nation playerBelongs(Player player) {
 		for (Nation n : nations) {
-			if (n.getUUID().equals(player.getUniqueId()))
-				return n;
-			else
-				continue;
+			for(Citizen c : n.citizens) {
+				if(c.getDisplayName().equals(player.getDisplayName())) {
+					return n;
+				}
+			}
 		}
 		return null;
 	}
@@ -158,6 +155,17 @@ public class NationManager implements Serializable {
 		}
 		return null;
 	}
+	
+	public static void updateNations() {
+		for(Nation n : nations) {
+			if(n.getTreasury() < 0.0)
+				n.indexDebt += 1;
+				if(n.indexDebt >= 10) {					
+					n.broadcastToCitizens(ChatColor.RED + "Your Nation Has Gone Bankrupt, It Will Now Be Disbanded!");
+					removeNation(n.getNationName());
+				}
+		}
+	}
 
 	public static void saveNations() {
 		try {
@@ -165,6 +173,7 @@ public class NationManager implements Serializable {
 				FileOutputStream fout = new FileOutputStream(PowerCivs.path + "/Nations/" + nation.getNationName() + ".dat");
 				ObjectOutputStream oos = new ObjectOutputStream(fout);
 				oos.writeObject(nation);
+				oos.close();
 				fout.flush();
 				fout.close();
 			}
@@ -194,6 +203,7 @@ public class NationManager implements Serializable {
 			for (Nation n : nations) {
 				if (n.nationName.equals(name)) {
 					nations.remove(n);
+					ClaimManager.removeClaim(n.getNationName());
 					File f = new File(PowerCivs.path + "/Nations/" + name + ".dat");
 					f.delete();
 				}

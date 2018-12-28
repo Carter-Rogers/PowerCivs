@@ -1,6 +1,6 @@
 main: powercivs.PowerCivs
 name: PowerCivs
-version: 0.1.0
+version: 1.0
 load: STARTUP
 author: Carter_Rogers
 commands:
@@ -43,4 +43,6 @@ commands:
  accept:
   description: accepts a request from a nation
   usage: /accept <nation>
-  
+ money:
+  description: checks player economy balance.
+  usage: /bal
