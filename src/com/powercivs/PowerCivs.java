@@ -90,7 +90,8 @@ public class PowerCivs extends JavaPlugin implements Listener{
 				else {
 					player.sendMessage("");
 					player.sendMessage(ChatColor.GREEN + "" + civ.getName() + "'s Information:");
-					player.sendMessage(ChatColor.GREEN + "Leader: " + civ.getLeader());
+					player.sendMessage(ChatColor.GREEN + "Leader: " + ChatColor.BLUE + Bukkit.getPlayer(UUID.fromString(civ.getLeader())).getName());
+					
 					player.sendMessage("");
 					
 					return true;
@@ -108,13 +109,88 @@ public class PowerCivs extends JavaPlugin implements Listener{
 				else {
 					player.sendMessage("");
 					player.sendMessage(ChatColor.GREEN + "" + civ.getName() + "'s Information:");
-					player.sendMessage(ChatColor.GREEN + "Leader: " + Bukkit.getPlayer(UUID.fromString(civ.getLeader())).getName());
+					player.sendMessage(ChatColor.GREEN + "Leader: " + ChatColor.BLUE + Bukkit.getPlayer(UUID.fromString(civ.getLeader())).getName());
 					player.sendMessage("");
-					
 					return true;
 				}
 				
 				return true;
+			}
+		}
+		
+		if(cmd.getName().equalsIgnoreCase("civ") && args[0].equalsIgnoreCase("invite")) {
+			String invitedPlayer = args[1];
+			
+			Civilization civ = getCivByUUID(player.getUniqueId().toString());
+			Civilization otherCiv = getCivByUUID(Bukkit.getPlayer(invitedPlayer).getUniqueId().toString());
+			
+			
+			
+			if(civ == null) {
+				player.sendMessage(ChatColor.RED + "You Aren't In A Civilization!");
+				return true;
+			}else {
+				if(otherCiv == null) {
+					if(civ.getLeader().equalsIgnoreCase(player.getUniqueId().toString())) {
+						boolean invited = civ.invitePlayer(Bukkit.getPlayer(invitedPlayer).getUniqueId().toString());
+						
+						if(!invited) {
+							player.sendMessage(ChatColor.RED + "!");
+						}else {
+							player.sendMessage(ChatColor.GREEN + "Civilization Invite Sent Successfully!");
+						}
+						
+						return true;
+					}else {
+						player.sendMessage(ChatColor.RED + "You Aren't The Leader of This Civilization!");
+						return true;
+					}
+				}else {
+					if(civ.getLeader().equalsIgnoreCase(player.getUniqueId().toString())) {
+						if(otherCiv.getName().equalsIgnoreCase(civ.getName())) {
+							player.sendMessage(ChatColor.RED + "Player Already Belongs To Your Civilization!");
+							return true;
+						}else {
+							boolean invited = civ.invitePlayer(Bukkit.getPlayer(invitedPlayer).getUniqueId().toString());
+							
+							if(!invited) {
+								player.sendMessage(ChatColor.RED + "!");
+							}else {
+								player.sendMessage(ChatColor.GREEN + "Civilization Invite Sent Successfully!");
+							}
+							
+							return true;
+						}
+					}else {
+						player.sendMessage(ChatColor.RED + "You Aren't The Leader of This Civilization!");
+						return true;
+					}
+				}
+				
+			}	
+		}
+		
+		if(cmd.getName().equalsIgnoreCase("civ") && args[0].equalsIgnoreCase("accept") || args[0].equalsIgnoreCase("deny")) {
+			String civ = args[1];
+			
+			Civilization civilization = getCivByName(civ);
+			
+			if(civilization == null) {
+				return true;
+			}else {
+				
+				if(civilization.isInvited(player.getUniqueId().toString())) {
+					if(args[0].equalsIgnoreCase("accept")) {
+						civilization.AcceptOrDeny(player.getUniqueId().toString(), true);
+					}else if(args[0].equalsIgnoreCase("deny")) {
+						civilization.AcceptOrDeny(player.getUniqueId().toString(), false);
+					}
+					return true;
+				}else {
+					player.sendMessage(ChatColor.RED + "You Don't Have A Pending Invite From This Civilization!");
+					return true;
+				}
+				
 			}
 		}
 		
