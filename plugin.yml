@@ -1,0 +1,8 @@
+name: PowerCivs
+main: com.powercivs.PowerCivs
+api-version: 1.16
+version: 1.0
+commands:
+   about:
+      description: gives information about PowerCivs
+   civ:
