@@ -7,8 +7,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
-import org.bukkit.Bukkit;
-
 import com.powercivs.PowerCivs;
 
 public class ClaimManager {
@@ -48,8 +46,6 @@ public class ClaimManager {
 				continue;
 			}
 		}
-		
-		Bukkit.getLogger().info("no claims");
 		return null;
 	}
 	

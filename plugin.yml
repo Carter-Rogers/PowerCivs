@@ -6,3 +6,4 @@ commands:
    about:
       description: gives information about PowerCivs
    civ:
+      description: <new, accept, deny, info, claim, leave>
