@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import org.bukkit.Bukkit;
 
 import com.powercivs.PowerCivs;
+import com.powercivs.claims.LandClaim;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -19,6 +20,7 @@ public class EntityManager implements Serializable{
 	public static final long serialVersionUID = 1L;
 	
 	public static ArrayList<Civilization> civs = new ArrayList<Civilization>();
+	public static ArrayList<LandClaim> claims = new ArrayList<LandClaim>();
 	
 	public static void initEntityManager() {
 		File directory = new File(PowerCivs.path + "/Entities");
