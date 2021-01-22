@@ -1,22 +1,10 @@
 package com.powercivs.entities;
 
 import java.util.ArrayList;
-<<<<<<< HEAD
-
 import org.bukkit.Bukkit;
 
-public class Civilization extends Entity{
-	
-	private static final long serialVersionUID = 1L;
-
-	protected String leader;
-	
-	protected ArrayList<String> citizens = new ArrayList<String>();
-=======
 import java.util.HashMap;
 import java.util.Map.Entry;
-
-import org.bukkit.Bukkit;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -28,7 +16,6 @@ public class Civilization extends Entity{
 	protected ArrayList<String> citizens = new ArrayList<String>();
 	protected HashMap<String, Boolean> invites = new HashMap<String, Boolean>();
 	public HashMap<String, String> cabinet_roles = new HashMap<String, String>();
->>>>>>> development
 	
 	public Civilization(String name) {
 		super(name);
@@ -41,10 +28,7 @@ public class Civilization extends Entity{
 			return;
 		}else {
 			citizens.add(leader);
-<<<<<<< HEAD
 			Bukkit.getLogger().info("Added To Citizen Roster");
-=======
->>>>>>> development
 		}
 	}
 
@@ -57,11 +41,6 @@ public class Civilization extends Entity{
 		return leader;
 	}
 	
-<<<<<<< HEAD
-	
-	
-
-=======
 	public boolean invitePlayer(String uuid) {
 		if(invites.containsKey(uuid)) {
 			return false;
@@ -137,6 +116,5 @@ public class Civilization extends Entity{
 			cabinet_roles.put(uuid, role.role);
 		}		
 	}
-	
->>>>>>> development
+
 }
