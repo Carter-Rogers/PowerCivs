@@ -6,7 +6,11 @@ import static com.powercivs.entities.EntityManager.initEntityManager;
 import static com.powercivs.entities.EntityManager.registerCivilization;
 import static com.powercivs.entities.EntityManager.saveCivs;
 
+import static com.powercivs.claims.ClaimManager.*;
+
 import java.io.File;
+import java.util.Map.Entry;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -15,8 +19,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.powercivs.claims.ClaimManager;
 import com.powercivs.data.SaveData;
 import com.powercivs.entities.Civilization;
+import com.powercivs.entities.Roles;
 
 public class PowerCivs extends JavaPlugin implements Listener {
 
@@ -28,7 +34,9 @@ public class PowerCivs extends JavaPlugin implements Listener {
 		}
 
 		new File(getDataFolder().getAbsolutePath() + "/Entities").mkdir();
+		new File(getDataFolder().getAbsolutePath() + "/Claims").mkdir();
 
+		
 		path = getDataFolder().getPath();
 	}
 
@@ -37,6 +45,7 @@ public class PowerCivs extends JavaPlugin implements Listener {
 		folderSetup();
 
 		initEntityManager();
+		initClaimManager();
 
 		new SaveData().runTaskTimer(this, 0, 1200); // save data every minute
 	}
@@ -46,8 +55,7 @@ public class PowerCivs extends JavaPlugin implements Listener {
 		Player player = (Player) sender;
 
 		if (cmd.getName().equalsIgnoreCase("about")) {
-			Player p = (Player) sender;
-			p.sendMessage(path);
+			player.sendMessage(ChatColor.RED + "Type /help powercivs for a list of commands for PowerCivs!");
 			return true;
 		}
 
@@ -94,6 +102,10 @@ public class PowerCivs extends JavaPlugin implements Listener {
 						player.sendMessage(ChatColor.GREEN + "" + civ.getName() + "'s Information:");
 						player.sendMessage(ChatColor.GREEN + "Leader: " + ChatColor.BLUE
 								+ civ.getLeader());
+						
+						for(Entry<String, String> cabinet : civ.cabinet_roles.entrySet()) {
+							player.sendMessage(ChatColor.GREEN + cabinet.getValue() + ":" + ChatColor.BLUE + cabinet.getKey());
+						}
 
 						player.sendMessage("");
 
@@ -113,6 +125,11 @@ public class PowerCivs extends JavaPlugin implements Listener {
 						player.sendMessage(ChatColor.GREEN + "" + civ.getName() + "'s Information:");
 						player.sendMessage(ChatColor.GREEN + "Leader: " + ChatColor.BLUE
 								+ civ.getLeader());
+						
+						for(Entry<String, String> cabinet : civ.cabinet_roles.entrySet()) {
+							player.sendMessage(ChatColor.GREEN + cabinet.getValue() + ":" + ChatColor.BLUE + cabinet.getKey());
+						}
+						
 						player.sendMessage("");
 						return true;
 					}
@@ -181,21 +198,95 @@ public class PowerCivs extends JavaPlugin implements Listener {
 			}
 			
 			if(cmd.getName().equalsIgnoreCase("civ") && args[0].equalsIgnoreCase("appoint")) {
-				String appointed = args[1];
 				
-				if(Bukkit.getPlayer(appointed) == null) {
-					player.sendMessage(ChatColor.RED + "Player Must Be Online To Appoint!");
+				if(args.length < 3) {
+					player.sendMessage(ChatColor.RED + "Type /help powercivs for a list of commands for PowerCivs!");
+					return true;
 				}else {
-					Civilization civ = getCivByUUID(player.getName());
+					String appointed = args[1];
+					String role = args[2];
 					
+					if(Bukkit.getPlayer(appointed) == null) {
+						player.sendMessage(ChatColor.RED + "Player Must Be Online To Appoint!");
+					}else {
+						Civilization civ = getCivByUUID(player.getName());
+						
+						if(civ.getLeader().equalsIgnoreCase(player.getName())) {
+							
+							if(appointed.equalsIgnoreCase(player.getName())) {
+								player.sendMessage(ChatColor.RED + "Player Cannot Be You!");
+								return true;
+							}else {
+								if(getCivByUUID(appointed) == null) {
+									player.sendMessage(ChatColor.RED + "Player Isn't In Your Nation!");
+									return true;
+								}else if(getCivByUUID(appointed).getName().equalsIgnoreCase(civ.getName())){
+									
+									switch(role) {
+										case "sot":
+											civ.appointCitizen(appointed, Roles.SOT);
+											return true;
+										case "sod":
+											civ.appointCitizen(appointed, Roles.SOD);
+											return true;
+										case "sos":
+											civ.appointCitizen(appointed, Roles.SOS);
+											return true;
+										default:						
+											civ.appointCitizen(appointed, Roles.SOT);
+											return true;
+									}
+									
+									
+								}else {
+									player.sendMessage(ChatColor.RED + "Player Isn't In Your Nation!");
+								}
+							}
+							
+						
+							
+						}else {
+							player.sendMessage(ChatColor.RED + "You Aren't The Leader of This Civilization!");
+							
+							return true;
+						}
+						
+					}
+				}
+			
+				return true;
+			}
+			
+			if(cmd.getName().equalsIgnoreCase("civ") && args[0].equalsIgnoreCase("claim")) {
+				
+				Civilization civ = getCivByUUID(player.getName());
+				
+				if(civ == null) {
+					player.sendMessage(ChatColor.RED + "You Aren't In A Civilization!");
+					return true;
+				}else {
 					if(civ.getLeader().equalsIgnoreCase(player.getName())) {
+						
+						String chunkX = "" + player.getLocation().getChunk().getX();
+						String chunkZ = "" + player.getLocation().getChunk().getZ();
+						
+						boolean claimed = addLandClaim(chunkX, chunkZ, civ.getName());
+						
+						if(claimed) {
+							player.sendMessage(ChatColor.GREEN + "Added Claim!");
+							return true;
+						}else {
+							player.sendMessage(ChatColor.RED + "Already Claimed By " +ChatColor.GREEN + ClaimManager.getLandClaim(chunkX, chunkZ).getOwner());
+							return true;
+						}
+						
+						
+					}else {
+						player.sendMessage(ChatColor.RED + "You Aren't The Leader of This Civilization!");
 						return true;
 					}
-					
 				}
 				
-				
-				return true;
 			}
 			
 
@@ -224,6 +315,34 @@ public class PowerCivs extends JavaPlugin implements Listener {
 				}
 			}
 
+			
+			if(cmd.getName().equalsIgnoreCase("civ") && args[0].equalsIgnoreCase("leave")) {
+				Civilization civ = getCivByUUID(player.getName());
+				
+				if(civ == null) {
+					player.sendMessage(ChatColor.RED + "You Aren't In A Civilization!");
+					return true;
+				}else {
+					
+					if(player.getName().equalsIgnoreCase(civ.getLeader())) {
+						player.sendMessage(ChatColor.RED + "You Must Appoint A New Leader First!");
+					}else {
+						
+						for(Entry<String, String> entry : civ.cabinet_roles.entrySet()) {
+							if(entry.getKey().equalsIgnoreCase(player.getName())) {
+								civ.cabinet_roles.remove(player.getName(), entry.getValue());
+							}
+						}
+						
+						civ.removeCitizen(player.getName());						
+						player.sendMessage(ChatColor.YELLOW + "Left Civilization Successfully!");
+					}
+					
+					return true;
+				}
+				
+			}
+			
 			return true;
 		}
 

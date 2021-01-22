@@ -2,7 +2,6 @@ package com.powercivs.entities;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
@@ -51,6 +50,10 @@ public class Civilization extends Entity{
 		}
 	}
 	
+	public void removeCitizen(String uuid) {
+		citizens.remove(uuid);
+	}
+	
 	public boolean isInvited(String uuid) {
 		if(invites.containsKey(uuid)) {
 			return true;
@@ -74,16 +77,43 @@ public class Civilization extends Entity{
 	public void appointCitizen(String uuid, Roles role) {
 		if(cabinet_roles.containsValue(role.role)) {
 			for(Entry<String, String> entry : cabinet_roles.entrySet()) {
-				if(Objects.equals(entry.getKey(), role.role)) {
-					Bukkit.getPlayer(entry.getKey()).sendMessage(ChatColor.RED + "You've Been Replaced In Your Civ's Cabinet!");
-					cabinet_roles.remove(entry.getKey(), entry.getValue());
+				if(entry.getValue() == role.role) {
+					cabinet_roles.remove(entry.getKey(), role.role);
+					Bukkit.getPlayer(leader).sendMessage("fixed");
+				}
+			}
+			
+			Bukkit.getPlayer(uuid).sendMessage(ChatColor.YELLOW + "You've Been Appointed As " + ChatColor.GREEN + role.role + ChatColor.YELLOW + "!");
+			
+			for(String s : citizens) {
+				if(Bukkit.getPlayer(s) == null) {
+					continue;
+				}else {
+					if(s.equalsIgnoreCase(uuid)) {
+						continue;
+					}else {
+						Bukkit.getPlayer(s).sendMessage(ChatColor.GREEN + uuid + ChatColor.YELLOW + " Has Been Appointed " + ChatColor.GREEN + role.role + ChatColor.YELLOW + "!");						
+					}
+				}
+			}
+			
+			cabinet_roles.put(uuid, role.role);
+		}else {
+			for(String s : citizens) {
+				if(Bukkit.getPlayer(s) == null) {
+					continue;
+				}else {
+					if(s.equalsIgnoreCase(uuid)) {
+						continue;
+					}else {
+						Bukkit.getPlayer(s).sendMessage(ChatColor.GREEN + uuid + ChatColor.YELLOW + " Has Been Appointed " + ChatColor.GREEN + role.role + ChatColor.YELLOW + "!");						
+					}
 				}
 			}
 			
 			Bukkit.getPlayer(uuid).sendMessage(ChatColor.YELLOW + "You've Been Appointed As " + ChatColor.GREEN + role.role + ChatColor.YELLOW + "!");
 			cabinet_roles.put(uuid, role.role);
-		}
-				
+		}		
 	}
 	
 }
