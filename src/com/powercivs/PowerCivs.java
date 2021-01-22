@@ -1,6 +1,10 @@
 package com.powercivs;
 
-import static com.powercivs.entities.EntityManager.*;
+import static com.powercivs.entities.EntityManager.getCivByName;
+import static com.powercivs.entities.EntityManager.getCivByUUID;
+import static com.powercivs.entities.EntityManager.initEntityManager;
+import static com.powercivs.entities.EntityManager.registerCivilization;
+import static com.powercivs.entities.EntityManager.saveCivs;
 
 import java.io.File;
 import java.util.UUID;
@@ -13,6 +17,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.powercivs.data.SaveData;
 import com.powercivs.entities.Civilization;
 
 public class PowerCivs extends JavaPlugin implements Listener{
@@ -36,6 +41,7 @@ public class PowerCivs extends JavaPlugin implements Listener{
 		
 		initEntityManager();
 		
+		new SaveData().runTaskTimer(this, 0, 1200); //save data every minute
 	}
 	
 	@Override
@@ -135,7 +141,7 @@ public class PowerCivs extends JavaPlugin implements Listener{
 						boolean invited = civ.invitePlayer(Bukkit.getPlayer(invitedPlayer).getUniqueId().toString());
 						
 						if(!invited) {
-							player.sendMessage(ChatColor.RED + "!");
+							player.sendMessage(ChatColor.RED + "Invite Already Sent!");
 						}else {
 							player.sendMessage(ChatColor.GREEN + "Civilization Invite Sent Successfully!");
 						}
@@ -154,7 +160,7 @@ public class PowerCivs extends JavaPlugin implements Listener{
 							boolean invited = civ.invitePlayer(Bukkit.getPlayer(invitedPlayer).getUniqueId().toString());
 							
 							if(!invited) {
-								player.sendMessage(ChatColor.RED + "!");
+								player.sendMessage(ChatColor.RED + "Invite Already Sent!");
 							}else {
 								player.sendMessage(ChatColor.GREEN + "Civilization Invite Sent Successfully!");
 							}
